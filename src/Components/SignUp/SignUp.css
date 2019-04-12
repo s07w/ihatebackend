@@ -48,7 +48,9 @@
         margin-top: 0px;
     }
     input[type="text-center"],
-    input[type="password-center"]
+    input[type="username-text-center"],
+    input[type="email-text-center"],
+    input[type="password"]
     {
         display:block;
         box-sizing: border-box;

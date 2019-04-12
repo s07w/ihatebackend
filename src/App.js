@@ -12,8 +12,8 @@ import MyMapComponent from './Components/MyMapComponent/MyMapComponent';
 const App = () => 
   <Router>
     <div>
-        <Login/>
-        {/* <SignUp />  */}
+        {/* <Login/> */}
+        <SignUp /> 
         {/* <Nav />
         <Switch>
           <Route exact path="/" component={SignUp}/>

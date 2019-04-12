@@ -1,53 +1,179 @@
 import React, { Component } from "react";
 import "./SignUp.css";
 import './Images/Background.jpg';
+import 'whatwg-fetch';
+import {
+  getFromStorage,
+  setInStorage
+} from "../../utils/storage";
 
 class SignUp extends Component {
+
+    constructor(props) {
+      super(props);
+
+      this.state = {
+        isLoading: true,
+        token: '',
+        signUpError: "",
+        signUpUsername: "",
+        signUpEmail: "",
+        signUpPassword: ""
+      };
+
+      this.onTextBoxChangeSignUpUsername = this.onTextBoxChangeSignUpUsername.bind(this);
+      this.onTextBoxChangeSignUpEmail = this.onTextBoxChangeSignUpEmail.bind(this);
+      this.onTextBoxChangeSignUpPassword = this.onTextBoxChangeSignUpPassword.bind(this);
+     
+      this.onSignUp = this.onSignUp.bind(this);
+      this.logout = this.logout.bind(this);
+    }
     // Setting the component's initial state
-    state = {
-      username: "",
-      email: "",
-      password: ""
-    };
+    
   
-    handleInputChange = event => {
-      // Getting the value and name of the input which triggered the change
-      let value = event.target.value;
-      const name = event.target.name;
-  
-      if (name === "password") {
-        value = value.substring(0, 15);
-      }
-      // Updating the input's state
-      this.setState({
-        [name]: value
-      });
-    };
-  
-    handleFormSubmit = event => {
-      // Preventing the default behavior of the form submit (which is to refresh the page)
-      event.preventDefault();
-      if (!this.state.username || !this.state.email) {
-        alert("Create a username and enter your email address please!");
-      } else if (this.state.password.length < 7) {
-        alert(
-          `Choose a more secure password ${this.state.username}`
-        );
+    componentDidMount() {
+      const obj = getFromStorage("the_main_app");
+      if (obj && obj.token) {
+        const { token } = obj;
+        // verify token
+        fetch('/api/account/verify?token=' + token)
+        .then(res => res.json())
+        .then(json => {
+         if (json.success) {
+           this.setState({
+             token,
+             isLoading: false
+           });
+         } else {
+           this.setState({
+             isLoading: false,
+           });
+         }
+        });
       } else {
-        alert(`Welcome Aboard, ${this.state.username}!`);
+        this.setState({
+          isLoading: false,
+        });
       }
-  
+    }
+
+    onTextBoxChangeSignUpUsername(event) {
       this.setState({
-        username: "",
-        email: "",
-        password: ""
+        signUpUsername: event.target.value,
       });
-    };
+    }
+  
+  
+    onTextBoxChangeSignUpEmail(event) {
+      this.setState({
+        signUpEmail: event.target.value,
+      });
+    }
+  
+    onTextBoxChangeSignUpPassword(event) {
+      this.setState({
+        signUpPassword: event.target.value,
+      });
+    }
+
+    onSignUp () {
+      //Grab state
+     const {
+       signUpUsername,
+       signUpEmail,
+       signUpPassword
+     } = this.state;
+ 
+     this.setState({
+       isLoading: true,
+     })
+ 
+       //POST req to backend
+       fetch('/api/account/signup', { 
+         method: 'POST', 
+         headers: {
+           'Content-Type': 'application/json'
+           ,'Accept': 'application/json'
+         },
+         body: JSON.stringify({
+           username: signUpUsername,
+           email: signUpEmail,
+           password: signUpPassword,
+         }),
+       }).then(res => res.json())
+         .then(json => {
+           if(json.success) { 
+             this.setState({
+               signUpError: json.message,
+               isLoading: false,
+               signUpUsername: "",
+               signUpEmail: "",
+               signUpPassword: ""
+           });
+         } else {
+           this.setState({
+             signUpError: json.message,
+             isLoading: false,
+           });
+         }
+       });
+   }
+
+  logout () {
+    const obj = getFromStorage("the_main_app");
+    if (obj && obj.token) {
+      const { token } = obj;
+      // verify token
+      fetch('/api/account/logout?token=' + token)
+      .then(res => res.json())
+      .then(json => {
+       if (json.success) {
+         this.setState({
+           token: '',
+           isLoading: false
+         });
+       } else {
+         this.setState({
+           isLoading: false,
+         });
+       }
+      });
+    } else {
+      this.setState({
+        isLoading: false,
+      });
+    }
+  }
   
     render(){
-        
-        return (
-            <div id="all">
+
+      const {
+      isLoading,
+      token,
+      signUpUsername,
+      signUpEmail,
+      signUpPassword,
+      signUpError
+    } = this.state;
+      
+    if (isLoading) {
+      return (<div><p>Loading...</p></div>)
+    }
+
+    if (!token){
+      return (
+
+       
+
+        <div id="all">
+        <div>
+            {
+                (signUpError) ? (
+                  <p>{signUpError}</p>
+                ) : (null)
+              }
+
+        </div>
                 <h2 className="title">Chordinate</h2>
                 <div id="login-box">
                     <div className="left-box">
@@ -59,27 +185,27 @@ class SignUp extends Component {
                         </div>
                         <form className="form">
                         <input
-                            value={this.state.username}
+                            value={signUpUsername}
                             name="username"
-                            onChange={this.handleInputChange}
-                            type="text-center"
+                            onChange={this.onTextBoxChangeSignUpUsername}
+                            type="username-text-center"
                             placeholder="Username"
                         />
                         <input
-                            value={this.state.email}
+                            value={signUpEmail}
                             name="email"
-                            onChange={this.handleInputChange}
-                            type="text-center"
+                            onChange={this.onTextBoxChangeSignUpEmail}
+                            type="email-text-center"
                             placeholder="Email"
                         />
                         <input
-                            value={this.state.password}
+                            value={signUpPassword}
                             name="password"
-                            onChange={this.handleInputChange}
-                            type="password-center"
+                            onChange={this.onTextBoxChangeSignUpPassword}
+                            type="password"
                             placeholder="Password"
                         />                    
-                        <button class="signup-button" onClick={this.handleFormSubmit}>Sign Up</button>
+                        <button class="signup-button" onClick={this.onSignUp}>Sign Up</button>
                         </form>
                         <p>Have An Account?<a href="LOG IN GOES HERE">Login</a></p>
                     </div>
@@ -91,8 +217,18 @@ class SignUp extends Component {
                     <div className="or">OR</div>
                 </div>
             </div>
+
         )
-    };
+      }
+
+      return (
+        <div>
+          <p>Account</p>
+          <button onClick={this.logout}>Logout</button>
+        </div>
+      )
+        
+  };
 
 }
 export default SignUp; 
